@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MyKIB</string>
+    <string name="scanbledevice">scanBLEDevice</string>
+</resources>
