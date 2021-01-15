@@ -3,7 +3,9 @@ package stealth.ishan.mykib;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
@@ -18,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -37,6 +40,18 @@ public class BleScan extends AppCompatActivity {
     private static ArrayList<BluetoothDevice> mLeDevices;
     private String bleDeviceName;
     private BluetoothDevice bleDevice;
+    private BluetoothGatt bluetoothGatt;
+    private Toast toast;
+    private int connectionState = STATE_DISCONNECTED;
+    private static final int STATE_DISCONNECTED = 0;
+    private static final int STATE_CONNECTING = 1;
+    private static final int STATE_CONNECTED = 2;
+    public final static String ACTION_GATT_CONNECTED =
+            "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
+    public final static String ACTION_GATT_DISCONNECTED =
+            "com.example.bluetooth.le.ACTION_GATT_DISCONNECTED";
+    public final static String ACTION_GATT_SERVICES_DISCOVERED =
+            "com.example.bluetooth.le.ACTION_GATT_SERVICES_DISCOVERED";
 
 
     private static final String logTag = BleScan.class.getSimpleName();
@@ -114,6 +129,36 @@ public class BleScan extends AppCompatActivity {
                     }
                 }
             };
+
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    public void connectBleDevice()
+    {
+        bluetoothGatt = bleDevice.connectGatt(this,false, gattCallback);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            super.onConnectionStateChange(gatt, status, newState);
+            String intentAction;
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
+                intentAction = ACTION_GATT_CONNECTED;
+                connectionState = STATE_CONNECTED;
+                //broadcastUpdate(intentAction);
+                Log.i(logTag, "Connected to GATT server.");
+                Log.i(logTag, "Attempting to start service discovery:" +
+                        bluetoothGatt.discoverServices());
+
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                intentAction = ACTION_GATT_DISCONNECTED;
+                connectionState = STATE_DISCONNECTED;
+                Log.i(logTag, "Disconnected from GATT server.");
+                //broadcastUpdate(intentAction);
+            }
+        }
+    };
 
 
     // Adapter for holding devices found through scanning.

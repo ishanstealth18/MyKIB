@@ -1,6 +1,7 @@
 package stealth.ishan.mykib;
 
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.ListAdapter;
 
@@ -9,6 +10,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,6 +18,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -41,7 +44,8 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<BluetoothDevice> bleList = new ArrayList<>();
     private Handler mHandler = new Handler();
     private ArrayAdapter<BluetoothDevice> a;
-    private TextView bleDeviceTextView;
+    private Intent intent;
+    AlertDialog.Builder builder;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Override
@@ -52,7 +56,31 @@ public class MainActivity extends AppCompatActivity {
         bleDeviceListView = (ListView) findViewById(R.id.ble_device_list_view);
         bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
-        bleDeviceListView.setOnClickListener();
+        builder = new AlertDialog.Builder(MainActivity.this);
+        bleDeviceListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                builder.setMessage("Do you want to connect this device?").setPositiveButton("Connect", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        toast = Toast.makeText(MainActivity.this, "Connecting....",Toast.LENGTH_SHORT);
+                        toast.show();
+                        intent = new Intent(MainActivity.this, BLEDeviceDetails.class);
+                        startActivity(intent);
+                    }
+                })
+                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                    }
+                });
+                AlertDialog alert = builder.create();
+                alert.setTitle("BLE Device: ");
+                alert.show();
+            }
+        });
+
     }
 
 
@@ -87,9 +115,10 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(logTag, "Array size: " +bleList.size() +" " +"Device: " +bleList.get(0));
                 a = new ArrayAdapter<BluetoothDevice>(MainActivity.this, android.R.layout.simple_list_item_1, bleList);
                 bleDeviceListView.setAdapter(a);
-
             }
         },10000);
+
+
 
     }
 }
