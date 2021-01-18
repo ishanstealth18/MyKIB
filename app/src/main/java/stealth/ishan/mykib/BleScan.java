@@ -1,9 +1,12 @@
 package stealth.ishan.mykib;
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -22,14 +25,18 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.security.Provider;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import static android.bluetooth.BluetoothClass.*;
 
 
-public class BleScan extends AppCompatActivity {
+public class BleScan {
 
     private BluetoothLeScanner bluetoothLeScanner;
     private boolean mScanning;
@@ -38,13 +45,18 @@ public class BleScan extends AppCompatActivity {
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
     private static ArrayList<BluetoothDevice> mLeDevices;
-    private String bleDeviceName;
+    private List<BluetoothGattService> gattServiceList;
+    List<BluetoothGattCharacteristic> gattCharacteristicList;
+    public String bleDeviceName;
     private BluetoothDevice bleDevice;
     private BluetoothGatt bluetoothGatt;
     private Toast toast;
-    private int connectionState = STATE_DISCONNECTED;
+    private UUID serviceUUID = null;
+    private UUID charUUID = null;
+
+
+    public int connectionState = STATE_DISCONNECTED;
     private static final int STATE_DISCONNECTED = 0;
-    private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
     public final static String ACTION_GATT_CONNECTED =
             "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
@@ -134,7 +146,7 @@ public class BleScan extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void connectBleDevice()
     {
-        bluetoothGatt = bleDevice.connectGatt(this,false, gattCallback);
+        bluetoothGatt = bleDevice.connectGatt(context,false, gattCallback);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -147,18 +159,60 @@ public class BleScan extends AppCompatActivity {
                 intentAction = ACTION_GATT_CONNECTED;
                 connectionState = STATE_CONNECTED;
                 //broadcastUpdate(intentAction);
-                Log.i(logTag, "Connected to GATT server.");
-                Log.i(logTag, "Attempting to start service discovery:" +
+                Log.d(logTag, "Connected to GATT server.");
+                Log.d(logTag, "Attempting to start service discovery:" +
                         bluetoothGatt.discoverServices());
 
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 intentAction = ACTION_GATT_DISCONNECTED;
                 connectionState = STATE_DISCONNECTED;
-                Log.i(logTag, "Disconnected from GATT server.");
+                Log.d(logTag, "Disconnected from GATT server.");
                 //broadcastUpdate(intentAction);
             }
         }
+
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            super.onServicesDiscovered(gatt, status);
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                //broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
+                Log.d(logTag, "onServicesDiscovered received: " + status);
+                Log.d(logTag, "Services discovered: " +gatt.getServices());
+                gattServiceList = gatt.getServices();
+            } else {
+                Log.d(logTag, "onServicesDiscovered received: " + status);
+            }
+
+            if(gattServiceList.size() > 0)
+            {
+                Log.d(logTag, "Gatt services identified: ");
+                for(BluetoothGattService gattService : gattServiceList)
+                {
+                    serviceUUID = gattService.getUuid();
+                    Log.d(logTag, "Service UUID: " +serviceUUID);
+                    gattCharacteristicList = gattService.getCharacteristics();
+                    //Log.d(logTag, "Characteristics: " +gattCharacteristicList);
+                }
+
+                if(gattCharacteristicList.size() > 0)
+                {
+                    Log.d(logTag, "Gatt characteristics identified: ");
+                    for(BluetoothGattCharacteristic gatChar : gattCharacteristicList)
+                    {
+                        charUUID = gatChar.getUuid();
+                        Log.d(logTag, "Service Characteristics: " + charUUID);
+                    }
+                }
+            }
+        }
+
     };
+
+
+
+
+
+
 
 
     // Adapter for holding devices found through scanning.

@@ -45,7 +45,9 @@ public class MainActivity extends AppCompatActivity {
     private Handler mHandler = new Handler();
     private ArrayAdapter<BluetoothDevice> a;
     private Intent intent;
-    AlertDialog.Builder builder;
+    private AlertDialog.Builder builder;
+    private Bundle bundle;
+    private String bleDeviceName;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Override
@@ -65,8 +67,23 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialogInterface, int i) {
                         toast = Toast.makeText(MainActivity.this, "Connecting....",Toast.LENGTH_SHORT);
                         toast.show();
-                        intent = new Intent(MainActivity.this, BLEDeviceDetails.class);
-                        startActivity(intent);
+                        BleScan.getInstance().connectBleDevice();
+                        //Inserting delay so that BLE connection is complete
+                        mHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                intent = new Intent(MainActivity.this, BLEDeviceDetails.class);
+                                startActivity(intent);
+                                bundle = new Bundle();
+                                bundle.putString("Device Name", BleScan.getInstance().bleDeviceName);
+                                bundle.putInt("Device Status", BleScan.getInstance().connectionState);
+                                Intent sendDeviceIntent = new Intent(MainActivity.this, BLEDeviceDetails.class);
+                                sendDeviceIntent.putExtras(bundle);
+                                startActivity(sendDeviceIntent);
+                            }
+                        },5000);
+
+
                     }
                 })
                         .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
