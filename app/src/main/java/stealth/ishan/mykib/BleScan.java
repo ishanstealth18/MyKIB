@@ -53,6 +53,7 @@ public class BleScan {
     private Toast toast;
     private UUID serviceUUID = null;
     private UUID charUUID = null;
+    public int bleDeviceRSSI = 0;
 
 
     public int connectionState = STATE_DISCONNECTED;
@@ -136,6 +137,7 @@ public class BleScan {
                         adapterObj = new LeDeviceListAdapter();
                         bleDevice = result.getDevice();
                         mLeDevices.add(bleDevice);
+                        bleDeviceRSSI = result.getRssi();
                         Log.d(logTag, "Device array: " +mLeDevices +" " +"Array count: " +mLeDevices.size());
                         bluetoothLeScanner.stopScan(leScanCallback);
                     }
@@ -191,6 +193,7 @@ public class BleScan {
                     serviceUUID = gattService.getUuid();
                     Log.d(logTag, "Service UUID: " +serviceUUID);
                     gattCharacteristicList = gattService.getCharacteristics();
+                    Log.d(logTag, "Characteristics for discovered service: " +gattService.getCharacteristics());
                     //Log.d(logTag, "Characteristics: " +gattCharacteristicList);
                 }
 

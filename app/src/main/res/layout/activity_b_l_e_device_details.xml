@@ -51,7 +51,6 @@
         android:id="@+id/deviceStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="22dp"
         android:contentDescription="deviceStatusDescription"
         android:text="Status: "
         android:textSize="18sp"
@@ -69,5 +68,31 @@
         android:hint="Device status"
         app:layout_constraintBaseline_toBaselineOf="@+id/deviceStatus"
         app:layout_constraintStart_toEndOf="@+id/deviceStatus" />
+
+    <TextView
+        android:id="@+id/rssi_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:contentDescription="rssi_text_description"
+        android:text="Current RSSI:"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:visibility="visible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/deviceStatus" />
+
+    <TextView
+        android:id="@+id/rssi_value_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:contentDescription="rssi_value_description"
+        android:hint="RSSI Value"
+        android:visibility="visible"
+        app:layout_constraintBaseline_toBaselineOf="@+id/rssi_text_view"
+        app:layout_constraintStart_toEndOf="@+id/rssi_text_view" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
