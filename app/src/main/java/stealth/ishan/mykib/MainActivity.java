@@ -78,6 +78,8 @@ public class MainActivity extends AppCompatActivity {
                                 bundle.putString("Device Name", BleScan.getInstance().bleDeviceName);
                                 bundle.putInt("Device Status", BleScan.getInstance().connectionState);
                                 bundle.putInt("Device RSSI", BleScan.getInstance().bleDeviceRSSI);
+                                bundle.putString("Service UUID" , BleScan.getInstance().service);
+                                bundle.putString("Command Char UUID" , BleScan.getInstance().commandCharacteristic);
                                 Intent sendDeviceIntent = new Intent(MainActivity.this, BLEDeviceDetails.class);
                                 sendDeviceIntent.putExtras(bundle);
                                 startActivity(sendDeviceIntent);

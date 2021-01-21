@@ -95,4 +95,73 @@
         app:layout_constraintBaseline_toBaselineOf="@+id/rssi_text_view"
         app:layout_constraintStart_toEndOf="@+id/rssi_text_view" />
 
+    <Button
+        android:id="@+id/resetButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="90dp"
+        android:contentDescription="resetButtonDescription"
+        android:text="Send Reset"
+        android:onClick="sendResetCommand"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:visibility="visible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rssi_text_view" />
+
+    <TextView
+        android:id="@+id/serviceUUIDText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:contentDescription="serviceUUIDDEscription"
+        android:text="Service UUID: "
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:visibility="visible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rssi_text_view" />
+
+    <TextView
+        android:id="@+id/serviceUUIDValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:contentDescription="serviceUUIDValueDescription"
+        android:hint="Service UUID"
+        android:textSize="12sp"
+        app:layout_constraintBaseline_toBaselineOf="@+id/serviceUUIDText"
+        app:layout_constraintStart_toEndOf="@+id/serviceUUIDText" />
+
+    <TextView
+        android:id="@+id/commandCharText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:contentDescription="commandCharDescription"
+        android:text="Command Char UUID:"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:visibility="visible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/serviceUUIDText" />
+
+    <TextView
+        android:id="@+id/commandCharUUIDValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:contentDescription="commandCharValDescription"
+        android:hint="Command Char UUID"
+        android:textSize="10sp"
+        android:visibility="visible"
+        app:layout_constraintBaseline_toBaselineOf="@+id/commandCharText"
+        app:layout_constraintStart_toEndOf="@+id/commandCharText" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

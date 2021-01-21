@@ -47,6 +47,9 @@ public class BleScan {
     private static ArrayList<BluetoothDevice> mLeDevices;
     private List<BluetoothGattService> gattServiceList;
     List<BluetoothGattCharacteristic> gattCharacteristicList;
+    public  final String commandCharacteristic = "c13c3555-2811-e1aa-7648-42b080d7ade7";
+    public  final String service = "6917f879-2dda-4d8e-9b46-cbe76616d50b";
+
     public String bleDeviceName;
     private BluetoothDevice bleDevice;
     private BluetoothGatt bluetoothGatt;
@@ -184,7 +187,7 @@ public class BleScan {
             } else {
                 Log.d(logTag, "onServicesDiscovered received: " + status);
             }
-
+            Log.d(logTag, "Total service size: " +gattServiceList.size());
             if(gattServiceList.size() > 0)
             {
                 Log.d(logTag, "Gatt services identified: ");
@@ -192,11 +195,20 @@ public class BleScan {
                 {
                     serviceUUID = gattService.getUuid();
                     Log.d(logTag, "Service UUID: " +serviceUUID);
-                    gattCharacteristicList = gattService.getCharacteristics();
+                    if(serviceUUID.toString().equals(service))
+                    {
+                        Log.d(logTag, "Correct characteristics detected");
+                        gattCharacteristicList = gattService.getCharacteristics();
+                        for(BluetoothGattCharacteristic c : gattCharacteristicList)
+                        {
+                            Log.d(logTag, "Current characteristics: " + c.getUuid());
+                        }
+                    }
+                    //gattCharacteristicList = gattService.getCharacteristics();
                     Log.d(logTag, "Characteristics for discovered service: " +gattService.getCharacteristics());
                     //Log.d(logTag, "Characteristics: " +gattCharacteristicList);
                 }
-
+                //Log.d(logTag, "Total characteristics size: " +gattCharacteristicList.size());
                 if(gattCharacteristicList.size() > 0)
                 {
                     Log.d(logTag, "Gatt characteristics identified: ");
@@ -210,6 +222,8 @@ public class BleScan {
         }
 
     };
+
+
 
 
 
