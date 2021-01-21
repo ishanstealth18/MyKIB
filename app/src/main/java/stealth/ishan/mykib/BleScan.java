@@ -52,10 +52,10 @@ public class BleScan {
 
     public String bleDeviceName;
     private BluetoothDevice bleDevice;
-    private BluetoothGatt bluetoothGatt;
+    public BluetoothGatt bluetoothGatt;
     private Toast toast;
-    private UUID serviceUUID = null;
-    private UUID charUUID = null;
+    public UUID serviceUUID = null;
+    public UUID charUUID = null;
     public int bleDeviceRSSI = 0;
 
 
@@ -204,11 +204,9 @@ public class BleScan {
                             Log.d(logTag, "Current characteristics: " + c.getUuid());
                         }
                     }
-                    //gattCharacteristicList = gattService.getCharacteristics();
                     Log.d(logTag, "Characteristics for discovered service: " +gattService.getCharacteristics());
-                    //Log.d(logTag, "Characteristics: " +gattCharacteristicList);
                 }
-                //Log.d(logTag, "Total characteristics size: " +gattCharacteristicList.size());
+
                 if(gattCharacteristicList.size() > 0)
                 {
                     Log.d(logTag, "Gatt characteristics identified: ");

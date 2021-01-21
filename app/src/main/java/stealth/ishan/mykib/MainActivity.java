@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
                 a = new ArrayAdapter<BluetoothDevice>(MainActivity.this, android.R.layout.simple_list_item_1, bleList);
                 bleDeviceListView.setAdapter(a);
             }
-        },10000);
+        },5000);
 
 
 

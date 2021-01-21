@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="deviceNameText" type="id" />
+    <item name="deviceStatus" type="id" />
+    <item name="deviceName" type="id" />
+    <item name="deviceStatusText" type="id" />
+    <item name="rssi_text_view" type="id" />
+    <item name="rssi_value_text" type="id" />
+    <item name="resetButton" type="id" />
+    <item name="serviceUUIDText" type="id" />
+    <item name="serviceUUIDValue" type="id" />
+    <item name="commandCharText" type="id" />
+    <item name="commandCharUUIDValue" type="id" />
+</resources>

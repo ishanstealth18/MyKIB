@@ -1,8 +1,10 @@
 package stealth.ishan.mykib;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -49,6 +51,7 @@ public class BLEDeviceDetails extends AppCompatActivity {
         serviceUUIDValueView = findViewById(R.id.serviceUUIDValue);
         commandCharUUIDTextView = findViewById(R.id.commandCharText);
         commandCharUUIDValueView = findViewById(R.id.commandCharUUIDValue);
+
         Intent getDeviceDetailsIntent = getIntent();
         bundle = getDeviceDetailsIntent.getExtras();
 
@@ -71,6 +74,9 @@ public class BLEDeviceDetails extends AppCompatActivity {
         commandCharUUIDValueView.setText(getCommandCharUUID);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void sendResetCommand(View view) {
+
+        Commands.getInstance().resetCommand();
     }
 }
