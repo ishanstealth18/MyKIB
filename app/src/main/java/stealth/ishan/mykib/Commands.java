@@ -46,7 +46,7 @@ public class Commands {
             {
                 writeCharUUId = gc.getUuid();
                 bWriteChar = gc;
-                
+
                 Log.d(logTag, "Char uuid: " +gc.getUuid());
             }
             //Log.d(logTag, "Char uuid: " +gc.getUuid());
@@ -54,6 +54,7 @@ public class Commands {
         byte[] resetData = {0x00};
         bWriteChar.setValue(resetData);
         bGatt = BleScan.getInstance().bluetoothGatt;
+        bGatt.setCharacteristicNotification(bWriteChar,true);
         bGatt.writeCharacteristic(bWriteChar);
     }
 
