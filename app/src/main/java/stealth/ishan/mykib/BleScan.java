@@ -1,6 +1,7 @@
 package stealth.ishan.mykib;
 
 import android.bluetooth.BluetoothAdapter;
+
 import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -25,10 +26,22 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
@@ -47,8 +60,16 @@ public class BleScan {
     private static ArrayList<BluetoothDevice> mLeDevices;
     private List<BluetoothGattService> gattServiceList;
     List<BluetoothGattCharacteristic> gattCharacteristicList;
+    private BluetoothGattCharacteristic readChar;
     public  final String commandCharacteristic = "c13c3555-2811-e1aa-7648-42b080d7ade7";
     public  final String service = "6917f879-2dda-4d8e-9b46-cbe76616d50b";
+    public static final String CONFIG_CHARACTERISTIC_ID = "C13C3555-2811-E1AA-7648-42B080D7ADE8";
+    private static byte[] DECRYPTION_AES_Key = {'L','I','G','H','T','W','A','V','E','P','R','O','D','U','C','T'};
+    private static byte[] ENCRYPTION_AES_Key =  {0, 0, 0 , 0, 0, 0, 0, 0, 0, 0,'l','w','k','i','b',0x00};
+    private static final byte[] ivArray =  {0x20, (byte)0xc7, 0x04, 0x40, (byte)0xac, 0x40, 0x0d, (byte)0xba, (byte)0x84, 0x06, 0x57, 0x00, 0x74, (byte)0xf2, (byte)0xe2, 0x2a};
+    private static byte[] randNumber = {(byte)0,(byte)0,(byte)0,(byte)0};
+    private static final int CONFIG_CHARACTERISTIC_ID_LENGTH = 16;
+    private static final int ENCRYPTION_RAND_BYTE = 0;
 
     public String bleDeviceName;
     private BluetoothDevice bleDevice;
@@ -202,6 +223,11 @@ public class BleScan {
                         for(BluetoothGattCharacteristic c : gattCharacteristicList)
                         {
                             Log.d(logTag, "Current characteristics: " + c.getUuid());
+                            if(c.getUuid().toString().equals("c13c3555-2811-e1aa-7648-42b080d7ade8"))
+                            {
+                                readChar = c;
+                                Log.d(logTag, "readChar: " +readChar.getUuid());
+                            }
                         }
                     }
                     Log.d(logTag, "Characteristics for discovered service: " +gattService.getCharacteristics());
@@ -216,18 +242,173 @@ public class BleScan {
                         Log.d(logTag, "Service Characteristics: " + charUUID);
                     }
                 }
+                boolean readStatus;
+                readStatus = bluetoothGatt.readCharacteristic(readChar);
+                Log.d(logTag, "read status: " +readStatus);
             }
         }
 
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            super.onCharacteristicChanged(gatt, characteristic);
+            Log.d(logTag, "Characteristic changed: " + Arrays.toString(characteristic.getValue()));
+        }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicRead(gatt, characteristic, status);
+
+            String hexValue = bytesToHex(characteristic.getValue());
+            StringBuilder sb = new StringBuilder();
+            for(int i = 0; i<hexValue.length()-1; i=i+2)
+            {
+                String temp = hexValue.substring(i,i+2);
+                sb.append(temp);
+                sb.append(" ");
+            }
+            Log.d(logTag, "Characteristic read hex: " + sb.toString());
+            Log.d(logTag, "Characteristic read: " + Arrays.toString(characteristic.getValue()));
+
+            if(characteristic.getUuid().toString().toUpperCase().equals(CONFIG_CHARACTERISTIC_ID))
+            {
+                Log.d(logTag, "Characteristics matching");
+                byte[] decryptedInfo = null;
+                try {
+                    decryptedInfo = needToDecrypt(characteristic.getValue());
+                    String decryptedDataHexString = bytesToHex(decryptedInfo);
+                    Log.d(logTag, "Decrypted values original in HEX string: " +arrayToString(decryptedDataHexString));
+                    Log.d(logTag, "Decrypted values formatted: " +arrayToString(decryptedDataHexString));
+                    Log.d(logTag, "Length of the decoded data: " +decryptedInfo.length);
+
+                    if(decryptedInfo.length >= CONFIG_CHARACTERISTIC_ID_LENGTH)
+                    {
+                        decodeEncryptionRandom(decryptedInfo);
+                    }
+
+                } catch (NoSuchAlgorithmException e) {
+                    e.printStackTrace();
+                } catch (NoSuchPaddingException | InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+        }
     };
 
+    public String arrayToString(String hexString)
+    {
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i<hexString.length()-1; i=i+2)
+        {
+            String temp = hexString.substring(i,i+2);
+            sb.append(temp);
+            sb.append(" ");
+        }
+        return sb.toString();
+    }
+
+    private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
+    public static String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for (int j = 0; j < bytes.length; j++) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
+            hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+
+    public byte[] needToDecrypt(byte[] infoToDecode) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+        byte[] decryptedData = null;
+        Log.d(logTag, "Size of data to be decoded: " +infoToDecode.length);
+        if(infoToDecode.length < CONFIG_CHARACTERISTIC_ID_LENGTH)
+        {
+            Log.d(logTag, "Invalid information size!!");
+        }
+        else
+        {
+            Log.d(logTag, "Decryption needed!!");
+            decryptedData = decryptData(infoToDecode);
+        }
+        return decryptedData;
+    }
+
+    public byte[] decryptData(byte[] dataToDecrypt) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+        byte[] finalDecryptedData = null;
+        Log.d(logTag, "Start decryption.....");
+        String dataToDecryptHexString = bytesToHex(dataToDecrypt);
+        String keyHexString = bytesToHex(DECRYPTION_AES_Key);
+        String ivHexString = bytesToHex(ivArray);
+        if(dataToDecrypt.length == 16)
+        {
+            IvParameterSpec iv = new IvParameterSpec(ivArray);
+            SecretKeySpec secretKey = new SecretKeySpec(DECRYPTION_AES_Key,"AES");
+            Log.d(logTag, "Decrypted Data: " +arrayToString(dataToDecryptHexString));
+            Log.d(logTag, "Decrypted Key: " +arrayToString(keyHexString));
+            Log.d(logTag, "Decrypted IV: " +arrayToString(ivHexString));
+            Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE,secretKey,iv);
+            finalDecryptedData =cipher.doFinal(dataToDecrypt);
+        }
+        return finalDecryptedData;
+    }
 
 
+    private byte[] decodeEncryptionRandom(byte[] data) {
+        for(int cnt = 0; cnt < randNumber.length;cnt++ )
+            randNumber[cnt] = data[ENCRYPTION_RAND_BYTE+cnt];
+        Log.d(logTag, String.format("[decodeEncryptionRandom]: 0X%02X 0X%02X 0X%02X 0X%02X",
+                randNumber[0], randNumber[1],randNumber[2],randNumber[3]));
 
+        return randNumber;
+    }
 
+    public byte[] dataToEncrypt(byte[] dataToEncrypt) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
+        Log.d(logTag, "Size of data to encrypt: " +dataToEncrypt.length);
+        byte[] formattedData = {(byte)0,(byte)0,(byte)0,(byte)0,(byte)0,(byte)0,(byte)0,(byte)0,
+                (byte)0,(byte)0,(byte)0,(byte)0,(byte)0,(byte)0,(byte)0,(byte)0};
 
+        for(int i = 0; i<dataToEncrypt.length; i++)
+        {
+            formattedData[i] = dataToEncrypt[i];
+        }
+        Log.d(logTag, String.format("[decodeEncryptionRandom]: 0X%02X 0X%02X 0X%02X 0X%02X",
+                randNumber[0], randNumber[1],randNumber[2],randNumber[3]));
+        System.arraycopy(randNumber,0,ENCRYPTION_AES_Key,0,randNumber.length);
+        Log.d(logTag, "Encryption AES Key: " + arrayToString(bytesToHex(ENCRYPTION_AES_Key)));
 
+        Log.d(logTag, "BLE device address: " +bleDevice.getAddress());
+        String[] bleDeviceAddress = bleDevice.getAddress().split(":");
+        Log.d(logTag, "BLE address in array form: " + Arrays.toString(bleDeviceAddress));
 
+        for(int i = 0; i<bleDeviceAddress.length; i++)
+        {
+            ENCRYPTION_AES_Key[randNumber.length+i] =(byte)Integer.parseInt(bleDeviceAddress[i], 16);
+        }
+        Log.d(logTag, "Encryption AES Key after adding device address from random number length: "
+                + arrayToString(bytesToHex(ENCRYPTION_AES_Key)));
+
+        byte[] encryptedData = encryptData(formattedData);
+        Log.d(logTag, "Encrypted Data final: " +arrayToString(bytesToHex(encryptedData)));
+        return encryptedData;
+    }
+
+    public byte[] encryptData(byte[] dataToEncrypt) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+        IvParameterSpec iv = new IvParameterSpec(ivArray);
+        Log.d(logTag, String.format("[encrypt] random: 0X%02X 0X%02X 0X%02X 0X%02X", randNumber[0], randNumber[1],randNumber[2],randNumber[3]));
+        String encryptionHexString = bytesToHex(ENCRYPTION_AES_Key);
+        String ivEncryptHexString = bytesToHex(ivArray);
+        String dataBeforeEncryption = bytesToHex(dataToEncrypt);
+
+        Log.d(logTag, "Encrypted Key: " +arrayToString(encryptionHexString));
+        Log.d(logTag, "Encrypted IV: " +arrayToString(ivEncryptHexString));
+        Log.d(logTag, "Data before encryption : " +arrayToString(dataBeforeEncryption));
+        SecretKeySpec skeySpec = new SecretKeySpec(ENCRYPTION_AES_Key, "AES");
+        Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
+        cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
+        return cipher.doFinal(dataToEncrypt);
+    }
 
 
     // Adapter for holding devices found through scanning.

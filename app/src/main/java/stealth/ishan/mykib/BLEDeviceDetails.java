@@ -12,6 +12,14 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+
 public class BLEDeviceDetails extends AppCompatActivity {
 
     private static final String logTag = BLEDeviceDetails.class.getSimpleName();
@@ -75,7 +83,7 @@ public class BLEDeviceDetails extends AppCompatActivity {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-    public void sendResetCommand(View view) {
+    public void sendResetCommand(View view) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
 
         Commands.getInstance().resetCommand();
     }
