@@ -68,6 +68,9 @@ public class BLEDeviceDetails extends AppCompatActivity {
 
     }
 
+    /**
+     * This function will set and get the values from another activity
+     */
     public void getDeviceDetails()
     {
         getBleDeviceName = bundle.getString("Device Name");
@@ -82,9 +85,19 @@ public class BLEDeviceDetails extends AppCompatActivity {
         commandCharUUIDValueView.setText(getCommandCharUUID);
     }
 
+    /**
+     * This function will send the Lock command when clicked
+     * @param view
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws NoSuchAlgorithmException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     * @throws InvalidAlgorithmParameterException
+     */
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void sendResetCommand(View view) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
 
-        Commands.getInstance().resetCommand();
+        Commands.getInstance().lockCommand();
     }
 }

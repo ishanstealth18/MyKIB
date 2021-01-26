@@ -40,10 +40,10 @@ public class Commands {
     {
 
     }
-
+    //Creating the instance
     private static Commands commandInstance = new Commands();
 
-
+    //Get instance method
     static Commands getInstance() {
         if(commandInstance == null)
         {
@@ -52,10 +52,20 @@ public class Commands {
         return commandInstance;
     }
 
+    /**
+     * This function will list out the write/read characteristics, send the data to encrypt and write data to characteristics
+     * @throws NoSuchPaddingException
+     * @throws InvalidAlgorithmParameterException
+     * @throws NoSuchAlgorithmException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     * @throws InvalidKeyException
+     */
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-    public void resetCommand() throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
+    public void lockCommand() throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
         bGattCharacteristicList = BleScan.getInstance().gattCharacteristicList;
         Log.d(logTag, "List size :" +bGattCharacteristicList.size());
+        //Listing out characteristics
         for(BluetoothGattCharacteristic gc : bGattCharacteristicList)
         {
             if(gc.getUuid().toString().equals("c13c3555-2811-e1aa-7648-42b080d7ade7"))
@@ -73,6 +83,7 @@ public class Commands {
             }
             //Log.d(logTag, "Char uuid: " +gc.getUuid());
         }
+        //Assigning lock command bytes to byte[]
         byte[] commandDataFrame = LOCK_COMMAND;
         int dataFrameLength = commandDataFrame.length;
         Log.d(logTag, "Command data frame length:  " +dataFrameLength);
@@ -81,6 +92,7 @@ public class Commands {
         int currentDataSize = 0;
         while(dataSentSize < dataFrameLength)
         {
+            Log.d(logTag, "Data sent size: " +dataSentSize);
             if(dataFrameLength - dataSentSize > 16)
             {
                 currentDataSize = 16;
@@ -117,8 +129,6 @@ public class Commands {
             {
                 Log.d(logTag, "bGatt is null");
             }
-
-
             dataSentSize = dataSentSize + currentDataSize;
         }
 
@@ -136,6 +146,11 @@ public class Commands {
     }
 
 
+    /**
+     * This function converts hex string to normal string with " " spaces
+     * @param hexString
+     * @return
+     */
     public String arrayToString(String hexString)
     {
         StringBuilder sb = new StringBuilder();
@@ -148,6 +163,9 @@ public class Commands {
         return sb.toString();
     }
 
+    /**
+     * This function will take byte array and convert it to HEX String
+     */
     private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
     public static String bytesToHex(byte[] bytes) {
         char[] hexChars = new char[bytes.length * 2];

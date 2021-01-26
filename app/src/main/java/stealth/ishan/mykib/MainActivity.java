@@ -53,25 +53,30 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //Setting up the content view, initializing all the fields on screen
         setContentView(R.layout.activity_main);
         scanBtn = (Button) findViewById(R.id.scan_ble_button);
         bleDeviceListView = (ListView) findViewById(R.id.ble_device_list_view);
         bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
         builder = new AlertDialog.Builder(MainActivity.this);
+        //Logic when the item on the list is clicked
         bleDeviceListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                //Show message to ask user if he wants to connect
                 builder.setMessage("Do you want to connect this device?").setPositiveButton("Connect", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         toast = Toast.makeText(MainActivity.this, "Connecting....",Toast.LENGTH_SHORT);
                         toast.show();
+                        //Calling the function to connect to BLE device
                         BleScan.getInstance().connectBleDevice();
                         //Inserting delay so that BLE connection is complete
                         mHandler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
+                                //Starting new activity and sending all the data to another activity using bundle
                                 intent = new Intent(MainActivity.this, BLEDeviceDetails.class);
                                 startActivity(intent);
                                 bundle = new Bundle();
@@ -88,8 +93,7 @@ public class MainActivity extends AppCompatActivity {
 
 
                     }
-                })
-                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
 
@@ -104,6 +108,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * This function will check if the bluetooth connection is ON, if its OFF, it will turn it ON
+     */
     public void checkBluetoothState()
     {
         context = getApplicationContext();
@@ -117,17 +124,23 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
+    /**
+     * This function will start scanning for BLE device around.
+     * @param view
+     * @throws InterruptedException
+     */
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void scanBLEDevices(View view) throws InterruptedException {
         Log.d(logTag, "Scan button pressed!!");
         checkBluetoothState();
+        //If Bluetooth State is ON, then only it will start to scan
         if(bluetoothAdapter.getState() == BluetoothAdapter.STATE_ON)
         {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 BleScan.getInstance().scanLeDevice();
             }
         }
+        //Inserting delay to complete the process of scanning and then displaying in the list on UI.
         mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {

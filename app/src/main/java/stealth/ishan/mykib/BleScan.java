@@ -99,6 +99,8 @@ public class BleScan {
 
     }
 
+    //Creating an instance so that it can be accessed by other classes/activities w/o creating
+    //additional objects
     private static BleScan ourInstance = new BleScan();
 
     public static ArrayList getBleList()
@@ -106,6 +108,7 @@ public class BleScan {
         return mLeDevices;
     }
 
+    //Get instance method
     static BleScan getInstance() {
         if(ourInstance == null)
         {
@@ -114,6 +117,9 @@ public class BleScan {
         return ourInstance;
     }
 
+    /**
+     * This function will scan BLE device, it will stop scan after certain period.
+     */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void scanLeDevice()
     {
@@ -142,6 +148,9 @@ public class BleScan {
         return;
     }
 
+    /**
+     * This function will give call back with results of scanning
+     */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     // Device scan callback.
     private ScanCallback leScanCallback =
@@ -155,6 +164,7 @@ public class BleScan {
                     {
                         bleDeviceName = "NULL";
                     }
+                    //Checking if BLE device is KIB, if yes, add it in the list and stop scanning
                     if(bleDeviceName.equals("LW  KIB"))
                     {
                         Log.d(logTag, "KIB detected!!");
@@ -169,12 +179,18 @@ public class BleScan {
             };
 
 
+    /**
+     * This function will connect to BLE and call gattcallback.
+     */
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void connectBleDevice()
     {
         bluetoothGatt = bleDevice.connectGatt(context,false, gattCallback);
     }
 
+    /**
+     * This function will connect to Bluetooth Gatt server, discover services and characteristics.
+     */
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override
@@ -216,6 +232,7 @@ public class BleScan {
                 {
                     serviceUUID = gattService.getUuid();
                     Log.d(logTag, "Service UUID: " +serviceUUID);
+                    //Logic to check if it detects correct characteristic for writing and reading commands
                     if(serviceUUID.toString().equals(service))
                     {
                         Log.d(logTag, "Correct characteristics detected");
@@ -223,6 +240,7 @@ public class BleScan {
                         for(BluetoothGattCharacteristic c : gattCharacteristicList)
                         {
                             Log.d(logTag, "Current characteristics: " + c.getUuid());
+                            //Checking for a particular characteristics
                             if(c.getUuid().toString().equals("c13c3555-2811-e1aa-7648-42b080d7ade8"))
                             {
                                 readChar = c;
@@ -232,7 +250,7 @@ public class BleScan {
                     }
                     Log.d(logTag, "Characteristics for discovered service: " +gattService.getCharacteristics());
                 }
-
+                //Listing out characteristics
                 if(gattCharacteristicList.size() > 0)
                 {
                     Log.d(logTag, "Gatt characteristics identified: ");
@@ -254,10 +272,11 @@ public class BleScan {
             Log.d(logTag, "Characteristic changed: " + Arrays.toString(characteristic.getValue()));
         }
 
+        //Reading the data coming from KIB device and decrypting it
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicRead(gatt, characteristic, status);
-
+            //Getting the values from characteristics in byte[] and converting to String
             String hexValue = bytesToHex(characteristic.getValue());
             StringBuilder sb = new StringBuilder();
             for(int i = 0; i<hexValue.length()-1; i=i+2)
@@ -268,20 +287,22 @@ public class BleScan {
             }
             Log.d(logTag, "Characteristic read hex: " + sb.toString());
             Log.d(logTag, "Characteristic read: " + Arrays.toString(characteristic.getValue()));
-
+            //Validate if correct characteristic is there
             if(characteristic.getUuid().toString().toUpperCase().equals(CONFIG_CHARACTERISTIC_ID))
             {
                 Log.d(logTag, "Characteristics matching");
                 byte[] decryptedInfo = null;
                 try {
+                    //Check if decryption is needed
                     decryptedInfo = needToDecrypt(characteristic.getValue());
                     String decryptedDataHexString = bytesToHex(decryptedInfo);
                     Log.d(logTag, "Decrypted values original in HEX string: " +arrayToString(decryptedDataHexString));
                     Log.d(logTag, "Decrypted values formatted: " +arrayToString(decryptedDataHexString));
                     Log.d(logTag, "Length of the decoded data: " +decryptedInfo.length);
-
+                    //If length of data is equal to config characteristic length, extract random key
                     if(decryptedInfo.length >= CONFIG_CHARACTERISTIC_ID_LENGTH)
                     {
+                        //Function to call random key
                         decodeEncryptionRandom(decryptedInfo);
                     }
 
@@ -296,6 +317,11 @@ public class BleScan {
         }
     };
 
+    /**
+     * This function converts hex string to normal string with " " spaces
+     * @param hexString
+     * @return
+     */
     public String arrayToString(String hexString)
     {
         StringBuilder sb = new StringBuilder();
@@ -308,6 +334,9 @@ public class BleScan {
         return sb.toString();
     }
 
+    /**
+     * This function will take byte array and convert it to HEX String
+     */
     private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
     public static String bytesToHex(byte[] bytes) {
         char[] hexChars = new char[bytes.length * 2];
@@ -319,6 +348,17 @@ public class BleScan {
         return new String(hexChars);
     }
 
+    /**
+     * This function checks if data which is read is eligible for decryption
+     * @param infoToDecode
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidAlgorithmParameterException
+     * @throws InvalidKeyException
+     * @throws BadPaddingException
+     * @throws IllegalBlockSizeException
+     */
     public byte[] needToDecrypt(byte[] infoToDecode) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         byte[] decryptedData = null;
         Log.d(logTag, "Size of data to be decoded: " +infoToDecode.length);
@@ -329,11 +369,23 @@ public class BleScan {
         else
         {
             Log.d(logTag, "Decryption needed!!");
+            //Function to decrypt data
             decryptedData = decryptData(infoToDecode);
         }
         return decryptedData;
     }
 
+    /**
+     * This function will decrypt the data using Key, Data and IV, returns decrypted data in bytes[]
+     * @param dataToDecrypt
+     * @return
+     * @throws NoSuchPaddingException
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidAlgorithmParameterException
+     * @throws InvalidKeyException
+     * @throws BadPaddingException
+     * @throws IllegalBlockSizeException
+     */
     public byte[] decryptData(byte[] dataToDecrypt) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         byte[] finalDecryptedData = null;
         Log.d(logTag, "Start decryption.....");
@@ -354,7 +406,11 @@ public class BleScan {
         return finalDecryptedData;
     }
 
-
+    /**
+     * This function will extract random key which will be used by KIB module to decrypt
+     * @param data
+     * @return
+     */
     private byte[] decodeEncryptionRandom(byte[] data) {
         for(int cnt = 0; cnt < randNumber.length;cnt++ )
             randNumber[cnt] = data[ENCRYPTION_RAND_BYTE+cnt];
@@ -364,6 +420,17 @@ public class BleScan {
         return randNumber;
     }
 
+    /**
+     * This function will format the data to be decrypted
+     * @param dataToEncrypt
+     * @return
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws NoSuchAlgorithmException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     * @throws InvalidAlgorithmParameterException
+     */
     public byte[] dataToEncrypt(byte[] dataToEncrypt) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
         Log.d(logTag, "Size of data to encrypt: " +dataToEncrypt.length);
         byte[] formattedData = {(byte)0,(byte)0,(byte)0,(byte)0,(byte)0,(byte)0,(byte)0,(byte)0,
@@ -375,6 +442,7 @@ public class BleScan {
         }
         Log.d(logTag, String.format("[decodeEncryptionRandom]: 0X%02X 0X%02X 0X%02X 0X%02X",
                 randNumber[0], randNumber[1],randNumber[2],randNumber[3]));
+        //Copy the random key which was extracted earlier to Encryption AES key
         System.arraycopy(randNumber,0,ENCRYPTION_AES_Key,0,randNumber.length);
         Log.d(logTag, "Encryption AES Key: " + arrayToString(bytesToHex(ENCRYPTION_AES_Key)));
 
@@ -382,18 +450,30 @@ public class BleScan {
         String[] bleDeviceAddress = bleDevice.getAddress().split(":");
         Log.d(logTag, "BLE address in array form: " + Arrays.toString(bleDeviceAddress));
 
+        //Add BLE device address to Encryption AES key
         for(int i = 0; i<bleDeviceAddress.length; i++)
         {
             ENCRYPTION_AES_Key[randNumber.length+i] =(byte)Integer.parseInt(bleDeviceAddress[i], 16);
         }
         Log.d(logTag, "Encryption AES Key after adding device address from random number length: "
                 + arrayToString(bytesToHex(ENCRYPTION_AES_Key)));
-
+        //Send the data to encrypt
         byte[] encryptedData = encryptData(formattedData);
         Log.d(logTag, "Encrypted Data final: " +arrayToString(bytesToHex(encryptedData)));
         return encryptedData;
     }
 
+    /**
+     * This function will encrypt the data using Key, IV.
+     * @param dataToEncrypt
+     * @return
+     * @throws NoSuchPaddingException
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidAlgorithmParameterException
+     * @throws InvalidKeyException
+     * @throws BadPaddingException
+     * @throws IllegalBlockSizeException
+     */
     public byte[] encryptData(byte[] dataToEncrypt) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         IvParameterSpec iv = new IvParameterSpec(ivArray);
         Log.d(logTag, String.format("[encrypt] random: 0X%02X 0X%02X 0X%02X 0X%02X", randNumber[0], randNumber[1],randNumber[2],randNumber[3]));
