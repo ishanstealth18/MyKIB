@@ -220,6 +220,7 @@ public class Commands {
     {
         Log.d(logTag, "Device name :" +bleDevice.getName() +" " +"Device address: " +bleDevice.getAddress());
         Log.d(logTag, "Current RSSI: " +BleScan.getInstance().bleDeviceRSSI);
+
     }
 
 

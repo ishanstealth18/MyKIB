@@ -3,6 +3,8 @@ package stealth.ishan.mykib;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -43,6 +45,9 @@ public class BLEDeviceDetails extends AppCompatActivity {
     private String getServiceUUID;
     private String getCommandCharUUID;
     private Handler mHandler;
+    private int bluetoothStateConnection = 0;
+    private BluetoothGatt bGatt = BleScan.getInstance().bluetoothGatt;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,5 +115,21 @@ public class BLEDeviceDetails extends AppCompatActivity {
     }
 
     public void setOutsideCalibration(View view) {
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    public void disconnectBLEDevice(View view) {
+
+        bGatt.disconnect();
+        Log.d(logTag, "Connection status: " +BleScan.getInstance().connectionState);
+        mHandler = new Handler();
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(logTag, "Connection status after delay: " +BleScan.getInstance().connectionState);
+            }
+        },5000);
+
+
     }
 }

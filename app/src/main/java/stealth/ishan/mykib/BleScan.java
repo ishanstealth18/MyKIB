@@ -80,9 +80,9 @@ public class BleScan {
     public int bleDeviceRSSI = 0;
 
 
-    public int connectionState = STATE_DISCONNECTED;
     private static final int STATE_DISCONNECTED = 0;
-    private static final int STATE_CONNECTED = 2;
+    public static final int STATE_CONNECTED = 2;
+    public int connectionState = STATE_DISCONNECTED;
     public final static String ACTION_GATT_CONNECTED =
             "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED =
