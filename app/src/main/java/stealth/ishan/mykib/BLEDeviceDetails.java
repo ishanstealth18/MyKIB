@@ -35,6 +35,7 @@ public class BLEDeviceDetails extends AppCompatActivity {
     private TextView commandCharUUIDTextView;
     private TextView commandCharUUIDValueView;
     private Button resetCommandBtn;
+    private Button unlockBtn;
     private Bundle bundle;
     private String getBleDeviceName;
     private int getBleStatus;
@@ -59,11 +60,10 @@ public class BLEDeviceDetails extends AppCompatActivity {
         serviceUUIDValueView = findViewById(R.id.serviceUUIDValue);
         commandCharUUIDTextView = findViewById(R.id.commandCharText);
         commandCharUUIDValueView = findViewById(R.id.commandCharUUIDValue);
+        unlockBtn = findViewById(R.id.unlockButton);
 
         Intent getDeviceDetailsIntent = getIntent();
         bundle = getDeviceDetailsIntent.getExtras();
-
-
         getDeviceDetails();
 
     }
@@ -96,8 +96,19 @@ public class BLEDeviceDetails extends AppCompatActivity {
      * @throws InvalidAlgorithmParameterException
      */
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-    public void sendResetCommand(View view) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
+    public void sendLockCommand(View view) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
 
         Commands.getInstance().lockCommand();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    public void sendUnlockCommand(View view) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
+        Commands.getInstance().unlockCommand();
+    }
+
+    public void setInsideCalibration(View view) {
+    }
+
+    public void setOutsideCalibration(View view) {
     }
 }

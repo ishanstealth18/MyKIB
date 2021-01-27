@@ -72,7 +72,7 @@ public class BleScan {
     private static final int ENCRYPTION_RAND_BYTE = 0;
 
     public String bleDeviceName;
-    private BluetoothDevice bleDevice;
+    public BluetoothDevice bleDevice;
     public BluetoothGatt bluetoothGatt;
     private Toast toast;
     public UUID serviceUUID = null;
