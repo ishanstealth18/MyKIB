@@ -44,8 +44,9 @@ public class BLEDeviceDetails extends AppCompatActivity {
     private int getBleDeviceRssi;
     private String getServiceUUID;
     private String getCommandCharUUID;
-    private Handler mHandler;
+    private Handler mHandler = new Handler();
     private int bluetoothStateConnection = 0;
+    private int bleRSSI = 0;
     private BluetoothGatt bGatt = BleScan.getInstance().bluetoothGatt;
 
 
@@ -111,7 +112,16 @@ public class BLEDeviceDetails extends AppCompatActivity {
         Commands.getInstance().unlockCommand();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void setInsideCalibration(View view) {
+        BleScan.getInstance().scanLeDevice();
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                bleRSSI = BleScan.getInstance().bleDeviceRSSI;
+                Log.d(logTag, "Inside RSSI: " +bleRSSI);
+            }
+        },5000);
     }
 
     public void setOutsideCalibration(View view) {
@@ -122,14 +132,12 @@ public class BLEDeviceDetails extends AppCompatActivity {
 
         bGatt.disconnect();
         Log.d(logTag, "Connection status: " +BleScan.getInstance().connectionState);
-        mHandler = new Handler();
+
         mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 Log.d(logTag, "Connection status after delay: " +BleScan.getInstance().connectionState);
             }
         },5000);
-
-
     }
 }
