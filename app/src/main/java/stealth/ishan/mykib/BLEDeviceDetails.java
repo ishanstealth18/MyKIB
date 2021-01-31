@@ -1,11 +1,21 @@
 package stealth.ishan.mykib;
 
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -22,6 +32,8 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
+import static stealth.ishan.mykib.R.id.rssiDialogValue;
+
 public class BLEDeviceDetails extends AppCompatActivity {
 
     private static final String logTag = BLEDeviceDetails.class.getSimpleName();
@@ -36,6 +48,8 @@ public class BLEDeviceDetails extends AppCompatActivity {
     private TextView serviceUUIDValueView;
     private TextView commandCharUUIDTextView;
     private TextView commandCharUUIDValueView;
+    private TextView rssiDialogValue;
+    private TextView insideRSSIVal;
     private Button resetCommandBtn;
     private Button unlockBtn;
     private Bundle bundle;
@@ -48,6 +62,13 @@ public class BLEDeviceDetails extends AppCompatActivity {
     private int bluetoothStateConnection = 0;
     private int bleRSSI = 0;
     private BluetoothGatt bGatt = BleScan.getInstance().bluetoothGatt;
+    private BluetoothLeScanner bleScanner;
+    private boolean mScan;
+    private BluetoothDevice bleDevice;
+    private String deviceName;
+    private int insideBleRSSI;
+    private AlertDialog.Builder builder;
+
 
 
     @Override
@@ -66,11 +87,17 @@ public class BLEDeviceDetails extends AppCompatActivity {
         serviceUUIDValueView = findViewById(R.id.serviceUUIDValue);
         commandCharUUIDTextView = findViewById(R.id.commandCharText);
         commandCharUUIDValueView = findViewById(R.id.commandCharUUIDValue);
+        //rssiDialogText = findViewById(R.id.rssiDialogTextView);
+        rssiDialogValue = findViewById(R.id.rssiDialogValue);
+
+        insideRSSIVal = findViewById(R.id.insideRSSIValue);
         unlockBtn = findViewById(R.id.unlockButton);
 
         Intent getDeviceDetailsIntent = getIntent();
         bundle = getDeviceDetailsIntent.getExtras();
         getDeviceDetails();
+
+        builder = new AlertDialog.Builder(BLEDeviceDetails.this);
 
     }
 
@@ -114,14 +141,9 @@ public class BLEDeviceDetails extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void setInsideCalibration(View view) {
-        BleScan.getInstance().scanLeDevice();
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                bleRSSI = BleScan.getInstance().bleDeviceRSSI;
-                Log.d(logTag, "Inside RSSI: " +bleRSSI);
-            }
-        },5000);
+
+
+        startBleScan();
     }
 
     public void setOutsideCalibration(View view) {
@@ -140,4 +162,75 @@ public class BLEDeviceDetails extends AppCompatActivity {
             }
         },5000);
     }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void startBleScan()
+    {
+        bleScanner = BluetoothAdapter.getDefaultAdapter().getBluetoothLeScanner();
+        Log.d(logTag, "mScan value: " +mScan);
+        if(!mScan)
+        {
+            // Stops scanning after a pre-defined scan period.
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mScan = false;
+                    //bleScanner.stopScan(leScanCallback);
+                }
+            }, 10000);
+
+            mScan = true;
+            bleScanner.startScan(leScanCallback);
+        }
+    }
+
+    /**
+     * This function will give call back with results of scanning
+     */
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    // Device scan callback.
+    private ScanCallback leScanCallback =
+            new ScanCallback() {
+                @Override
+                public void onScanResult(int callbackType, ScanResult result) {
+                    super.onScanResult(callbackType, result);
+                    Log.d(logTag, "Device address: " +result.getDevice().getAddress() +" " +"Device name: " +result.getDevice().getName());
+                    deviceName = result.getDevice().getName();
+                    if(deviceName == null)
+                    {
+                        deviceName = "NULL";
+                    }
+                    //Checking if BLE device is KIB, if yes, add it in the list and stop scanning
+                    if(deviceName.equals("LW  KIB"))
+                    {
+                        Log.d(logTag, "KIB detected!!");
+                        bleDevice = result.getDevice();
+                        insideBleRSSI = result.getRssi();
+                        Log.d(logTag, "Rssi: " +insideBleRSSI);
+                        insideRSSIVal.setText(String.valueOf(insideBleRSSI));
+
+
+                                View rssiDialogView = View.inflate(BLEDeviceDetails.this,R.layout.set_rssi_dialog,null);
+                                builder.setView(rssiDialogView);
+                                builder.setMessage("Set Inside Calibration: ").setPositiveButton("Set", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+
+                                    }
+                                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        bleScanner.stopScan(leScanCallback);
+                                    }
+                                });
+
+                                TextView rssiValue = (TextView) rssiDialogView.findViewById(R.id.rssiDialogValue);
+                                rssiValue.setText(String.valueOf(insideBleRSSI));
+                                AlertDialog alert = builder.create();
+                                alert.show();
+
+                    }
+                }
+    };
+
 }

@@ -243,4 +243,24 @@
         app:layout_constraintHorizontal_bias="0.878"
         app:layout_constraintStart_toEndOf="@+id/deviceName" />
 
+    <TextView
+        android:id="@+id/insideRSSIValue"
+        android:layout_width="34dp"
+        android:layout_height="22dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="38dp"
+        android:layout_marginEnd="50dp"
+        android:layout_marginRight="50dp"
+        android:layout_marginBottom="32dp"
+        android:contentDescription="insideRSSIValDescription"
+        android:text="0"
+        android:textSize="18sp"
+        android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@+id/OutsideCalibratBtn"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/insideCalibrateBtn"
+        app:layout_constraintTop_toBottomOf="@+id/unlockButton"
+        app:layout_constraintVertical_bias="0.0" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

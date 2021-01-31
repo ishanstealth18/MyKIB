@@ -197,9 +197,12 @@ public class BleScan {
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             super.onConnectionStateChange(gatt, status, newState);
             String intentAction;
+            boolean remoteReadRSSiStatus;
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 intentAction = ACTION_GATT_CONNECTED;
                 connectionState = STATE_CONNECTED;
+                remoteReadRSSiStatus = gatt.readRemoteRssi();
+                Log.d(logTag, "Remote rssi status: " +remoteReadRSSiStatus);
                 //broadcastUpdate(intentAction);
                 Log.d(logTag, "Connected to GATT server.");
                 Log.d(logTag, "Attempting to start service discovery:" +
@@ -211,6 +214,12 @@ public class BleScan {
                 Log.d(logTag, "Disconnected from GATT server.");
                 //broadcastUpdate(intentAction);
             }
+        }
+
+        @Override
+        public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
+            super.onReadRemoteRssi(gatt, rssi, status);
+            Log.d(logTag, " Remote rssi: " +rssi);
         }
 
         @Override
