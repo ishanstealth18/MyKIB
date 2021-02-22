@@ -7,15 +7,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -27,12 +23,13 @@ import android.widget.TextView;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-
-import static stealth.ishan.mykib.R.id.rssiDialogValue;
 
 public class BLEDeviceDetails extends AppCompatActivity {
 
@@ -66,10 +63,14 @@ public class BLEDeviceDetails extends AppCompatActivity {
     private boolean mScan;
     private BluetoothDevice bleDevice;
     private String deviceName;
-    private int insideBleRSSI;
     private AlertDialog.Builder builder;
-
-
+    private int insideBLESetValue = 0;
+    private int outsideBLESetValue = 0;
+    private TextView outsideRSSIValue;
+    private TextView devicePosition;
+    private TextView devicePositionState;
+    private boolean setInsideCalibrationFlag = false;
+    private boolean setOutsideCalibrationFlag = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,8 +88,10 @@ public class BLEDeviceDetails extends AppCompatActivity {
         serviceUUIDValueView = findViewById(R.id.serviceUUIDValue);
         commandCharUUIDTextView = findViewById(R.id.commandCharText);
         commandCharUUIDValueView = findViewById(R.id.commandCharUUIDValue);
-        //rssiDialogText = findViewById(R.id.rssiDialogTextView);
+        outsideRSSIValue = findViewById(R.id.outsideCalibrationValue);
         rssiDialogValue = findViewById(R.id.rssiDialogValue);
+        devicePosition = findViewById(R.id.devicePostionStatus);
+        devicePositionState = findViewById(R.id.devicePositionValue);
 
         insideRSSIVal = findViewById(R.id.insideRSSIValue);
         unlockBtn = findViewById(R.id.unlockButton);
@@ -104,8 +107,7 @@ public class BLEDeviceDetails extends AppCompatActivity {
     /**
      * This function will set and get the values from another activity
      */
-    public void getDeviceDetails()
-    {
+    public void getDeviceDetails() {
         getBleDeviceName = bundle.getString("Device Name");
         getBleStatus = bundle.getInt("Device Status");
         getBleDeviceRssi = bundle.getInt("Device RSSI");
@@ -113,13 +115,14 @@ public class BLEDeviceDetails extends AppCompatActivity {
         getCommandCharUUID = bundle.getString("Command Char UUID");
         deviceNameTextView.setText(getBleDeviceName);
         deviceStatusTextView.setText(String.valueOf(getBleStatus));
-        bleDeviceRssiVal.setText(String.valueOf(getBleDeviceRssi));
+        //bleDeviceRssiVal.setText(String.valueOf(getBleDeviceRssi));
         serviceUUIDValueView.setText(getServiceUUID);
         commandCharUUIDValueView.setText(getCommandCharUUID);
     }
 
     /**
      * This function will send the Lock command when clicked
+     *
      * @param view
      * @throws NoSuchPaddingException
      * @throws InvalidKeyException
@@ -141,35 +144,35 @@ public class BLEDeviceDetails extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void setInsideCalibration(View view) {
-
-
+        setInsideCalibrationFlag = true;
         startBleScan();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void setOutsideCalibration(View view) {
+        setOutsideCalibrationFlag = true;
+        startBleScan();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void disconnectBLEDevice(View view) {
 
         bGatt.disconnect();
-        Log.d(logTag, "Connection status: " +BleScan.getInstance().connectionState);
+        Log.d(logTag, "Connection status: " + BleScan.getInstance().connectionState);
 
         mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                Log.d(logTag, "Connection status after delay: " +BleScan.getInstance().connectionState);
+                Log.d(logTag, "Connection status after delay: " + BleScan.getInstance().connectionState);
             }
-        },5000);
+        }, 5000);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startBleScan()
-    {
+    public void startBleScan() {
         bleScanner = BluetoothAdapter.getDefaultAdapter().getBluetoothLeScanner();
-        Log.d(logTag, "mScan value: " +mScan);
-        if(!mScan)
-        {
+        Log.d(logTag, "mScan value: " + mScan);
+        if (!mScan) {
             // Stops scanning after a pre-defined scan period.
             mHandler.postDelayed(new Runnable() {
                 @Override
@@ -194,43 +197,60 @@ public class BLEDeviceDetails extends AppCompatActivity {
                 @Override
                 public void onScanResult(int callbackType, ScanResult result) {
                     super.onScanResult(callbackType, result);
-                    Log.d(logTag, "Device address: " +result.getDevice().getAddress() +" " +"Device name: " +result.getDevice().getName());
+                    Log.d(logTag, "Device address: " + result.getDevice().getAddress() + " " + "Device name: " + result.getDevice().getName());
                     deviceName = result.getDevice().getName();
-                    if(deviceName == null)
-                    {
+                    if (deviceName == null) {
                         deviceName = "NULL";
                     }
-                    //Checking if BLE device is KIB, if yes, add it in the list and stop scanning
-                    if(deviceName.equals("LW  KIB"))
-                    {
+                    //Checking if BLE device is KIB, if yes, update the RSSI value on the UI continuously.
+                    if (deviceName.equals("LW  KIB")) {
                         Log.d(logTag, "KIB detected!!");
                         bleDevice = result.getDevice();
-                        insideBleRSSI = result.getRssi();
-                        Log.d(logTag, "Rssi: " +insideBleRSSI);
-                        insideRSSIVal.setText(String.valueOf(insideBleRSSI));
-
-
-                                View rssiDialogView = View.inflate(BLEDeviceDetails.this,R.layout.set_rssi_dialog,null);
-                                builder.setView(rssiDialogView);
-                                builder.setMessage("Set Inside Calibration: ").setPositiveButton("Set", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-
-                                    }
-                                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        bleScanner.stopScan(leScanCallback);
-                                    }
-                                });
-
-                                TextView rssiValue = (TextView) rssiDialogView.findViewById(R.id.rssiDialogValue);
-                                rssiValue.setText(String.valueOf(insideBleRSSI));
-                                AlertDialog alert = builder.create();
-                                alert.show();
-
+                        bleRSSI = result.getRssi();
+                        Log.d(logTag, "Rssi: " + bleRSSI);
+                        bleDeviceRssiVal.setText(String.valueOf(bleRSSI));
+                        //Logic to check if user is trying to set Inside calibration or Outside calibration.
+                        if(setInsideCalibrationFlag == true)
+                        {
+                            insideRSSIVal.setText(String.valueOf(bleRSSI));
+                        }
+                        else
+                        {
+                            outsideRSSIValue.setText(String.valueOf(bleRSSI));
+                        }
                     }
                 }
-    };
+            };
 
+    /**
+     * This function will set the rssi value when user will press Set button on UI.
+     * @param view
+     */
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void setCalibrationValues(View view) {
+        //Logic to check if User is setting Inside/Outside calibration
+        if(setInsideCalibrationFlag == true)
+        {
+            insideBLESetValue = bleRSSI;
+            Log.d(logTag, "Inside Calibration final value : " +insideBLESetValue);
+            setInsideCalibrationFlag = false;
+        }
+        else
+        {
+            outsideBLESetValue = bleRSSI;
+            Log.d(logTag, "Outside Calibration final value : " +outsideBLESetValue);
+            setOutsideCalibrationFlag = false;
+        }
+        //Once rssi value is set, stop the scan.
+        //bleScanner.stopScan(leScanCallback);
+
+        if(bleRSSI <= insideBLESetValue)
+        {
+            devicePositionState.setText("Inside Car");
+        }
+        else if(bleRSSI > insideBLESetValue && bleRSSI < outsideBLESetValue)
+        {
+            devicePositionState.setText("Outside Car");
+        }
+    }
 }
