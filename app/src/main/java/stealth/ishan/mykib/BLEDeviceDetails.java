@@ -14,6 +14,8 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
@@ -62,20 +64,38 @@ public class BLEDeviceDetails extends AppCompatActivity {
     private String getCommandCharUUID;
     private Handler mHandler = new Handler();
     private int bluetoothStateConnection = 0;
-    private int bleRSSI = 0;
+    public int bleRSSI = 0;
     private BluetoothGatt bGatt = BleScan.getInstance().bluetoothGatt;
     private BluetoothLeScanner bleScanner;
     private boolean mScan;
     private BluetoothDevice bleDevice;
     private String deviceName;
     private AlertDialog.Builder builder;
-    private int insideBLESetValue = 0;
-    private int outsideBLESetValue = 0;
+    public int insideBLESetValue = 0;
+    public int outsideBLESetValue = 0;
     private TextView outsideRSSIValue;
     private TextView devicePosition;
-    private TextView devicePositionState;
+    public TextView devicePositionState;
     private boolean setInsideCalibrationFlag = false;
     private boolean setOutsideCalibrationFlag = false;
+    private boolean serviceButtonPressed = false;
+    public Context context;
+
+    public BLEDeviceDetails()
+    {
+
+    }
+
+    private static BLEDeviceDetails ourInstance = new BLEDeviceDetails();
+    //Get instance method
+    static BLEDeviceDetails getInstance() {
+        if(ourInstance == null)
+        {
+            ourInstance = new BLEDeviceDetails();
+        }
+        return ourInstance;
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,6 +126,7 @@ public class BLEDeviceDetails extends AppCompatActivity {
         getDeviceDetails();
 
         builder = new AlertDialog.Builder(BLEDeviceDetails.this);
+        context = new BLEDeviceDetails();
 
     }
 
@@ -208,18 +229,31 @@ public class BLEDeviceDetails extends AppCompatActivity {
                         deviceName = "NULL";
                     }
                     //Checking if BLE device is KIB, if yes, update the RSSI value on the UI continuously.
-                    if (deviceName.equals("LW  KIB")) {
+                    if (deviceName.equals("LW  KIB") && result.getDevice().getAddress().equals("DA:2D:79:F8:17:69")) {
                         Log.d(logTag, "KIB detected!!");
                         bleDevice = result.getDevice();
                         bleRSSI = result.getRssi();
                         Log.d(logTag, "Rssi: " + bleRSSI);
                         bleDeviceRssiVal.setText(String.valueOf(bleRSSI));
+
+                        if(serviceButtonPressed == true)
+                        {
+                            Log.d(logTag, "Sending rssi broadcast");
+                            Intent sendRSSIBroadcastIntent = new Intent("RSSIBROADCAST");
+                            Bundle rssiIfoBundle = new Bundle();
+                            rssiIfoBundle.putInt("RSSI_VALUE", bleRSSI);
+                            rssiIfoBundle.putInt("INSIDE_THRESHOLD", insideBLESetValue);
+                            rssiIfoBundle.putInt("OUTSIDE_THRESHOLD", outsideBLESetValue);
+                            sendRSSIBroadcastIntent.putExtras(rssiIfoBundle);
+                            sendBroadcast(sendRSSIBroadcastIntent);
+                        }
+
                         //Logic to check if user is trying to set Inside calibration or Outside calibration.
                         if(setInsideCalibrationFlag == true)
                         {
                             insideRSSIVal.setText(String.valueOf(bleRSSI));
                         }
-                        else
+                        else if(setOutsideCalibrationFlag == true)
                         {
                             outsideRSSIValue.setText(String.valueOf(bleRSSI));
                         }
@@ -240,7 +274,7 @@ public class BLEDeviceDetails extends AppCompatActivity {
             Log.d(logTag, "Inside Calibration final value : " +insideBLESetValue);
             setInsideCalibrationFlag = false;
         }
-        else
+        else if(setOutsideCalibrationFlag == true)
         {
             outsideBLESetValue = bleRSSI;
             Log.d(logTag, "Outside Calibration final value : " +outsideBLESetValue);
@@ -249,14 +283,30 @@ public class BLEDeviceDetails extends AppCompatActivity {
         //Once rssi value is set, stop the scan.
         //bleScanner.stopScan(leScanCallback);
 
-        if(bleRSSI <= insideBLESetValue)
-        {
-            devicePositionState.setText("Inside Car");
-        }
-        else if(bleRSSI > insideBLESetValue && bleRSSI < outsideBLESetValue)
-        {
-            devicePositionState.setText("Outside Car");
-        }
+
+    }
+
+
+    public void startBLEService(View view) {
+        serviceButtonPressed = true;
+        new Thread(new Runnable() {
+            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+            @Override
+            public void run() {
+                startService(new Intent(BLEDeviceDetails.this, BleService.class));
+                /**Log.d(logTag, "Sending rssi broadcast");
+                Intent sendRSSIBroadcastIntent = new Intent("RSSIBROADCAST");
+                Bundle rssiIfoBundle = new Bundle();
+                rssiIfoBundle.putInt("RSSI_VALUE", bleRSSI);
+                rssiIfoBundle.putInt("INSIDE_THRESHOLD", insideBLESetValue);
+                rssiIfoBundle.putInt("OUTSIDE_THRESHOLD", outsideBLESetValue);
+                sendRSSIBroadcastIntent.putExtras(rssiIfoBundle);
+                sendBroadcast(sendRSSIBroadcastIntent);**/
+            }
+        });
+
+
+
     }
 
 

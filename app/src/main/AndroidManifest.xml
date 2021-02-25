@@ -34,7 +34,11 @@
         </activity>
 
         <service android:name=".BleService"/>
-        
+        <receiver android:name="RssiReceiver">
+            <intent-filter>
+                <action android:name="RSSIBROADCAST"></action>
+            </intent-filter>
+        </receiver>
     </application>
 
 
