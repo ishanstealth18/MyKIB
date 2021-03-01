@@ -75,7 +75,7 @@ public class BLEDeviceDetails extends AppCompatActivity {
     public int outsideBLESetValue = 0;
     private TextView outsideRSSIValue;
     private TextView devicePosition;
-
+    private TextView devicePositionVal;
     private boolean setInsideCalibrationFlag = false;
     private boolean setOutsideCalibrationFlag = false;
     private boolean serviceButtonPressed = false;
@@ -128,6 +128,7 @@ public class BLEDeviceDetails extends AppCompatActivity {
 
         builder = new AlertDialog.Builder(BLEDeviceDetails.this);
         context = new BLEDeviceDetails();
+        ourInstance = this;
     }
 
     /**
@@ -307,5 +308,19 @@ public class BLEDeviceDetails extends AppCompatActivity {
     }
 
 
+    public void updatePhonePosition(String s)
+    {
+        BLEDeviceDetails.this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                devicePositionVal = findViewById(R.id.devicePositionValue);
+                devicePositionVal.setText(s);
+            }
+        });
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
 }

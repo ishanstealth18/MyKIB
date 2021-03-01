@@ -43,23 +43,17 @@ public class RssiReceiver extends BroadcastReceiver {
             if(liveRssi >= insideRssi && liveRssi > outideRssi)
             {
                 Log.d(logTag, "Inside Car:  Live rssi: " +liveRssi +" " +"Inside threshold: " +insideRssi);
-                toast = Toast.makeText(context, "Inside Car", Toast.LENGTH_SHORT);
-                toast.show();
-                //BLEDeviceDetails.getInstance(). updatePhonePosition("Inside Car");
+                BLEDeviceDetails.getInstance().updatePhonePosition("Inside Car");
             }
             else if(liveRssi < insideRssi && liveRssi >= outideRssi)
             {
                 Log.d(logTag, "Outside Car: Live rssi: " +liveRssi +" " +"Outside threshold: " +outideRssi);
-                //BLEDeviceDetails.getInstance().updatePhonePosition("Outside Car");
-                toast = Toast.makeText(context, "Outside Car", Toast.LENGTH_SHORT);
-                toast.show();
+                BLEDeviceDetails.getInstance().updatePhonePosition("Outside Car");
             }
             else if(liveRssi < outideRssi && liveRssi < insideRssi)
             {
                 Log.d(logTag, "Connected: Live rssi: " +liveRssi );
-                //BLEDeviceDetails.getInstance().updatePhonePosition("Connected");
-                toast = Toast.makeText(context, "Connected", Toast.LENGTH_SHORT);
-                toast.show();
+                BLEDeviceDetails.getInstance().updatePhonePosition("Connected");
             }
         }
     }
