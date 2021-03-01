@@ -75,20 +75,21 @@ public class BLEDeviceDetails extends AppCompatActivity {
     public int outsideBLESetValue = 0;
     private TextView outsideRSSIValue;
     private TextView devicePosition;
-    public TextView devicePositionState;
+
     private boolean setInsideCalibrationFlag = false;
     private boolean setOutsideCalibrationFlag = false;
     private boolean serviceButtonPressed = false;
     public Context context;
+
 
     public BLEDeviceDetails()
     {
 
     }
 
-    private static BLEDeviceDetails ourInstance = new BLEDeviceDetails();
+    private static BLEDeviceDetails ourInstance;
     //Get instance method
-    static BLEDeviceDetails getInstance() {
+    public static BLEDeviceDetails getInstance() {
         if(ourInstance == null)
         {
             ourInstance = new BLEDeviceDetails();
@@ -116,7 +117,7 @@ public class BLEDeviceDetails extends AppCompatActivity {
         outsideRSSIValue = findViewById(R.id.outsideCalibrationValue);
         rssiDialogValue = findViewById(R.id.rssiDialogValue);
         devicePosition = findViewById(R.id.devicePostionStatus);
-        devicePositionState = findViewById(R.id.devicePositionValue);
+
 
         insideRSSIVal = findViewById(R.id.insideRSSIValue);
         unlockBtn = findViewById(R.id.unlockButton);
@@ -127,7 +128,6 @@ public class BLEDeviceDetails extends AppCompatActivity {
 
         builder = new AlertDialog.Builder(BLEDeviceDetails.this);
         context = new BLEDeviceDetails();
-
     }
 
     /**
@@ -304,10 +304,8 @@ public class BLEDeviceDetails extends AppCompatActivity {
                 sendBroadcast(sendRSSIBroadcastIntent);**/
             }
         });
-
-
-
     }
+
 
 
 }

@@ -6,11 +6,28 @@ import android.content.Intent;
 import android.media.RoutingSessionInfo;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 public class RssiReceiver extends BroadcastReceiver {
     private static final String logTag = RssiReceiver.class.getSimpleName();
 
     private int liveRssi = 0;
+    private Toast toast;
+    private RssiReceiver rssireceiver;
+    Context context;
+
+    public Context getContext() {
+        if(BLEDeviceDetails.getInstance().getApplicationContext() != null)
+        {
+            return BLEDeviceDetails.getInstance().getApplicationContext();
+        }
+        else
+        {
+            Log.d(logTag, "Application context is null");
+            return null;
+        }
+
+    }
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -23,20 +40,26 @@ public class RssiReceiver extends BroadcastReceiver {
             liveRssi = getRSSIBundle.getInt("RSSI_VALUE");
             Log.d(logTag, "Live rssi: " +liveRssi +" "  +"Inside rssi: " +insideRssi +" " +"Outside rssi: " + outideRssi);
             Log.d(logTag, "Rssi received : " +liveRssi);
-            if(liveRssi <= insideRssi)
+            if(liveRssi >= insideRssi && liveRssi > outideRssi)
             {
-                Log.d(logTag, "Live rssi: " +liveRssi +" " +"Inside threshold: " +insideRssi);
-
-                BLEDeviceDetails.getInstance().devicePositionState.setText("Inside");
+                Log.d(logTag, "Inside Car:  Live rssi: " +liveRssi +" " +"Inside threshold: " +insideRssi);
+                toast = Toast.makeText(context, "Inside Car", Toast.LENGTH_SHORT);
+                toast.show();
+                //BLEDeviceDetails.getInstance(). updatePhonePosition("Inside Car");
             }
-            else if(liveRssi > insideRssi && liveRssi < outideRssi)
+            else if(liveRssi < insideRssi && liveRssi >= outideRssi)
             {
-                Log.d(logTag, "Live rssi: " +liveRssi +" " +"Outside threshold: " +outideRssi);
-                BLEDeviceDetails.getInstance().devicePositionState.setText("Outside Car");
+                Log.d(logTag, "Outside Car: Live rssi: " +liveRssi +" " +"Outside threshold: " +outideRssi);
+                //BLEDeviceDetails.getInstance().updatePhonePosition("Outside Car");
+                toast = Toast.makeText(context, "Outside Car", Toast.LENGTH_SHORT);
+                toast.show();
             }
-            else
+            else if(liveRssi < outideRssi && liveRssi < insideRssi)
             {
-                Log.d(logTag, "Outside range, Live rssi: " +liveRssi );
+                Log.d(logTag, "Connected: Live rssi: " +liveRssi );
+                //BLEDeviceDetails.getInstance().updatePhonePosition("Connected");
+                toast = Toast.makeText(context, "Connected", Toast.LENGTH_SHORT);
+                toast.show();
             }
         }
     }
