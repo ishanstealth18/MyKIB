@@ -12,22 +12,7 @@ public class RssiReceiver extends BroadcastReceiver {
     private static final String logTag = RssiReceiver.class.getSimpleName();
 
     private int liveRssi = 0;
-    private Toast toast;
-    private RssiReceiver rssireceiver;
-    Context context;
 
-    public Context getContext() {
-        if(BLEDeviceDetails.getInstance().getApplicationContext() != null)
-        {
-            return BLEDeviceDetails.getInstance().getApplicationContext();
-        }
-        else
-        {
-            Log.d(logTag, "Application context is null");
-            return null;
-        }
-
-    }
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -57,5 +42,4 @@ public class RssiReceiver extends BroadcastReceiver {
             }
         }
     }
-
 }
